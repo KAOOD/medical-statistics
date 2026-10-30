@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إحصاء وتصنيف العمليات الطبية</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f0fdfa; /* teal-50 */
+        }
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            color: #0f766e; /* teal-700 */
+            border-bottom-width: 2px;
+            border-color: #0f766e;
+            background-color: #ccfbf1; /* teal-100 */
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        td[contenteditable="true"]:focus {
+            outline: 2px solid #0d9488;
+            background-color: #fff;
+        }
+        /* Custom scrollbar for tables */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #99f6e4; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #14b8a6; 
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-teal-700 text-white shadow-md py-4 px-6 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <h1 class="text-2xl font-bold tracking-wide">نظام الإحصاء الطبي الذكي</h1>
+            </div>
+            <div class="text-sm bg-teal-800 py-1 px-3 rounded-full shadow-inner border border-teal-600">
+                تصنيف وإحصاء العمليات الجراحية
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+        
+        <!-- Tabs Navigation -->
+        <div class="bg-white rounded-t-xl shadow-sm border-b border-gray-200 flex overflow-x-auto">
+            <button onclick="switchTab('tab-input')" id="btn-tab-input" class="tab-btn active px-6 py-4 font-semibold text-gray-500 hover:text-teal-600 hover:bg-teal-50 whitespace-nowrap focus:outline-none">
+                إدخال ومراجعة البيانات
+            </button>
+            <button onclick="switchTab('tab-spec')" id="btn-tab-spec" class="tab-btn px-6 py-4 font-semibold text-gray-500 hover:text-teal-600 hover:bg-teal-50 whitespace-nowrap focus:outline-none">
+                إحصاء الاختصاصات
+            </button>
+            <button onclick="switchTab('tab-doc')" id="btn-tab-doc" class="tab-btn px-6 py-4 font-semibold text-gray-500 hover:text-teal-600 hover:bg-teal-50 whitespace-nowrap focus:outline-none">
+                إحصاء الأطباء
+            </button>
+            <button onclick="switchTab('tab-doc-spec')" id="btn-tab-doc-spec" class="tab-btn px-6 py-4 font-semibold text-gray-500 hover:text-teal-600 hover:bg-teal-50 whitespace-nowrap focus:outline-none">
+                إحصاء الطبيب حسب الاختصاص
+            </button>
+        </div>
+
+        <!-- Tabs Content Container -->
+        <div class="bg-white rounded-b-xl shadow-md p-6 min-h-[500px] mb-8 border border-t-0 border-gray-200">
+            
+            <!-- TAB 1: Input & Review -->
+            <div id="tab-input" class="tab-content active">
+                <div class="mb-8">
+                    <!-- Text Paste -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-solid border-gray-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-teal-800 text-lg">المعالجة الذكية (AI)</h3>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-2">الصق النصوص العشوائية أو المتداخلة ليقوم الذكاء الاصطناعي بفكها وتصنيفها.</p>
+                        <p class="text-xs text-amber-700 mb-2">تنبيه: لا تُدخل بيانات تعريفية حقيقية للمرضى على موقع عام قبل تطبيق ضوابط الخصوصية والصلاحيات.</p>
+                        <textarea id="paste-area" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm resize-y" placeholder="الصق بيانات العمليات هنا..."></textarea>
+                        <button id="process-ai-btn" onclick="processPastedText()" class="mt-3 w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors flex justify-center items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            استخراج البيانات بالذكاء الاصطناعي
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages / Alerts -->
+                <div id="status-message" class="hidden p-4 mb-4 text-sm rounded-lg" role="alert"></div>
+
+                <!-- Review Table -->
+                <div class="flex justify-between items-end mb-4">
+                    <h3 class="font-bold text-xl text-gray-800 border-r-4 border-teal-500 pr-3">البيانات المدخلة (قابلة للتعديل)</h3>
+                    <div class="text-sm text-gray-500 font-medium" id="record-count">عدد القيود: 0</div>
+                </div>
+                
+                <div class="table-container overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+                    <table class="w-full text-sm text-right text-gray-500">
+                        <thead class="text-xs text-teal-900 uppercase bg-teal-100/50">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">ت</th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">المريض</th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">التشخيص الأولي</th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">تصنيف العملية (الاختصاص)</th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">اسم العملية</th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">درجة العملية</th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">الطبيب المعالج</th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200 text-center">إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="review-table-body" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="8" class="px-6 py-8 text-center text-gray-400 bg-gray-50">
+                                    لا توجد بيانات حالياً. يرجى رفع ملف أو لصق النص أعلاه.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">* يمكنك النقر على أي خلية في الجدول أعلاه لتعديل محتواها، وسيتم تحديث الإحصائيات تلقائياً.</p>
+            </div>
+
+            <!-- TAB 2: Specialty Stats -->
+            <div id="tab-spec" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-xl text-gray-800 border-r-4 border-teal-500 pr-3">إحصاء الاختصاصات</h3>
+                    <button onclick="printSection('tab-spec')" class="text-teal-600 hover:text-teal-800 flex items-center gap-1 bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> طباعة
+                    </button>
+                </div>
+                <div class="table-container overflow-x-auto border border-gray-200 rounded-lg shadow-sm" id="spec-stats-container">
+                    <!-- Table injected by JS -->
+                </div>
+            </div>
+
+            <!-- TAB 3: Doctor Stats -->
+            <div id="tab-doc" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-xl text-gray-800 border-r-4 border-teal-500 pr-3">إحصاء الأطباء العام</h3>
+                    <button onclick="printSection('tab-doc')" class="text-teal-600 hover:text-teal-800 flex items-center gap-1 bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> طباعة
+                    </button>
+                </div>
+                <div class="table-container overflow-x-auto border border-gray-200 rounded-lg shadow-sm" id="doc-stats-container">
+                    <!-- Table injected by JS -->
+                </div>
+            </div>
+
+            <!-- TAB 4: Doctor by Specialty Stats -->
+            <div id="tab-doc-spec" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-xl text-gray-800 border-r-4 border-teal-500 pr-3">إحصاء الأطباء مقسم حسب الاختصاص</h3>
+                    <button onclick="printSection('tab-doc-spec')" class="text-teal-600 hover:text-teal-800 flex items-center gap-1 bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> طباعة
+                    </button>
+                </div>
+                <div id="doc-spec-container" class="space-y-8">
+                    <!-- Tables injected by JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-400 py-4 text-center text-sm">
+        <p>نظام إحصاء العمليات الطبية - معالجة ذكية للبيانات</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- State Management ---
+        let appData = [];
+        const degreesOrder = ['صغرى', 'متوسطة', 'كبرى', 'فوق الكبرى', 'خاصة'];
+        
+        const allowedSpecialties = [
+            "جراحة عامة", "نسائية وتوليد", "أنف وأذن وحنجرة", "جراحة القلب", 
+            "الكسور والعظام", "المجاري البولية", "جراحة الصدر", "العيون", 
+            "جراحة عصبية", "جراحة الأطفال", "جراحة الوجه", "أوعية المخ", 
+            "جلد تحت الجلد", "تداخل قسطاري", "جراحة الجهاز الهضمي", "زرع الكلى", 
+            "توسيع الصمام", "زرع منظم القلب", "تنظير الجهاز الهضمي", "تنظير الجهاز البولي", 
+            "تنظير الجهاز التنفسي", "تنظير جراحي", "زراعة القرنية", "تجميلية (تقويمية)", 
+            "الخصوبة", "أوعية دموية"
+        ];
+
+        // Ensure standard degrees
+        function normalizeDegree(degStr) {
+            if (!degStr) return '-';
+            const str = String(degStr).trim();
+            if (str.includes('فوق الكبرى') || str.includes('فوق كبرى')) return 'فوق الكبرى';
+            if (str.includes('كبرى') || str.includes('كبيرة')) return 'كبرى';
+            if (str.includes('متوسطة') || str.includes('وسطى')) return 'متوسطة';
+            if (str.includes('صغرى') || str.includes('صغيرة')) return 'صغرى';
+            if (str.includes('خاصة') || str.includes('خاصه')) return 'خاصة';
+            return str; // Return as is if unknown, though ideally should map to one
+        }
+
+        function cleanString(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).trim();
+        }
+
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[character]));
+        }
+
+        // --- Gynecology & Obstetrics Separation Logic (ONLY for Tab 4) ---
+        function getTab4Specialty(specialty, operation) {
+            let spec = cleanString(specialty);
+            let op = cleanString(operation);
+            
+            if (spec === 'نسائية وتوليد') {
+                const obstetricsKeywords = ['ولادة', 'قيصرية', 'قيصريه', 'o80', 'o82', 'o84'];
+                const opLower = op.toLowerCase();
+                const isObstetrics = obstetricsKeywords.some(keyword => opLower.includes(keyword));
+                
+                if (isObstetrics) {
+                    return 'توليد';
+                } else {
+                    return 'نسائية';
+                }
+            }
+            return spec;
+        }
+
+        // --- UI Interactions ---
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // Show target content
+            document.getElementById(tabId).classList.add('active');
+            // Activate target button
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        function showMessage(msg, type = 'success') {
+            const msgEl = document.getElementById('status-message');
+            msgEl.textContent = msg;
+            msgEl.className = `p-4 mb-4 text-sm rounded-lg block font-semibold ${type === 'success' ? 'bg-teal-100 text-teal-800' : 'bg-red-100 text-red-800'}`;
+            msgEl.classList.remove('hidden');
+            setTimeout(() => {
+                msgEl.classList.add('hidden');
+            }, 5000);
+        }
+
+        // --- Data Input Processing ---
+        
+        // Process Pasted Text (AI Powered)
+        async function processPastedText() {
+            const text = document.getElementById('paste-area').value;
+            if (!text.trim()) {
+                showMessage('الرجاء لصق النص أولاً.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('process-ai-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري المعالجة الذكية...';
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                // Put only the public Cloudflare Worker address here — never an API key.
+                const apiUrl = 'https://REPLACE-WITH-YOUR-WORKER.workers.dev';
+                if (apiUrl.includes('REPLACE-WITH-YOUR-WORKER')) {
+                    throw new Error('يرجى ربط خدمة الذكاء الاصطناعي (Worker) أولاً. راجع دليل النشر.');
+                }
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts) {
+                    const jsonText = result.candidates[0].content.parts[0].text;
+                    const parsedData = JSON.parse(jsonText);
+                    
+                    let newAppData = parsedData.map((item, i) => ({
+                        id: Date.now() + i,
+                        patient: cleanString(item.patientName),
+                        initialDiagnosis: cleanString(item.initialDiagnosis),
+                        specialty: cleanString(item.specialty),
+                        operation: cleanString(item.operationName),
+                        degree: normalizeDegree(item.degree),
+                        doctor: cleanString(item.doctorName)
+                    }));
+                    
+                    if (appData.length === 0) {
+                        appData = newAppData;
+                    } else {
+                        appData = appData.concat(newAppData);
+                    }
+                    
+                    updateAllViews();
+                    showMessage('تمت المعالجة الذكية بنجاح!');
+                    document.getElementById('paste-area').value = '';
+                } else {
+                    throw new Error("Invalid response format from AI.");
+                }
+            } catch (error) {
+                console.error(error);
+                showMessage(error.message.startsWith('يرجى ربط') ? error.message : 'حدث خطأ أثناء المعالجة الذكية. تأكد من إعدادات Worker ومفتاح Gemini.', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        }
+
+        // --- Data Binding & Rendering ---
+
+        function updateAllViews() {
+            renderReviewTable();
+            renderSpecialtyStats();
+            renderDoctorStats();
+            renderDoctorBySpecialtyStats();
+        }
+
+        // Render Tab 1 Table
+        function renderReviewTable() {
+            const tbody = document.getElementById('review-table-body');
+            document.getElementById('record-count').textContent = `عدد القيود: ${appData.length}`;
+            
+            if (appData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400 bg-gray-50">لا توجد بيانات حالياً.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            appData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-teal-50/30 transition-colors odd:bg-white even:bg-gray-50/50";
+                
+                // Using dataset to link HTML cell to appData object
+                tr.innerHTML = `
+                    <td class="px-6 py-3 whitespace-nowrap text-gray-400">${index + 1}</td>
+                    <td class="px-6 py-3 whitespace-nowrap font-medium text-gray-900 border-x border-gray-100" contenteditable="true" data-id="${row.id}" data-field="patient">${escapeHtml(row.patient)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap border-x border-gray-100" contenteditable="true" data-id="${row.id}" data-field="initialDiagnosis">${escapeHtml(row.initialDiagnosis || '')}</td>
+                    <td class="px-6 py-3 whitespace-nowrap border-x border-gray-100" contenteditable="true" data-id="${row.id}" data-field="specialty">${escapeHtml(row.specialty)}</td>
+                    <td class="px-6 py-3 border-x border-gray-100 min-w-[200px]" contenteditable="true" data-id="${row.id}" data-field="operation">${escapeHtml(row.operation)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap border-x border-gray-100" contenteditable="true" data-id="${row.id}" data-field="degree">${escapeHtml(row.degree)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap border-x border-gray-100 font-medium text-teal-800" contenteditable="true" data-id="${row.id}" data-field="doctor">${escapeHtml(row.doctor)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-center border-x border-gray-100">
+                        <button onclick="deleteRow(${row.id})" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-lg" title="حذف القيد">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Add event listeners for edits
+            document.querySelectorAll('td[contenteditable="true"]').forEach(cell => {
+                cell.addEventListener('blur', handleCellEdit);
+                // Prevent Enter key from making new lines, just blur
+                cell.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.blur();
+                    }
+                });
+            });
+        }
+
+        function handleCellEdit(e) {
+            const cell = e.target;
+            const id = parseInt(cell.getAttribute('data-id'));
+            const field = cell.getAttribute('data-field');
+            let newValue = cleanString(cell.textContent);
+
+            if (field === 'degree') {
+                newValue = normalizeDegree(newValue);
+                cell.textContent = newValue; // reflect normalized value
+            }
+
+            // Find and update row
+            const dataRowIndex = appData.findIndex(item => item.id === id);
+            if (dataRowIndex !== -1) {
+                appData[dataRowIndex][field] = newValue;
+                
+                // Re-render statistics tables silently
+                renderSpecialtyStats();
+                renderDoctorStats();
+                renderDoctorBySpecialtyStats();
+            }
+        }
+
+        function deleteRow(id) {
+            appData = appData.filter(item => item.id !== id);
+            updateAllViews();
+        }
+
+        // Generates the standard statistics table HTML
+        function generateStatsTableHTML(dataObj, rowLabel, hasSpecialtyColumn = false) {
+            // Calculate column totals
+            const totals = { 'صغرى': 0, 'متوسطة': 0, 'كبرى': 0, 'فوق الكبرى': 0, 'خاصة': 0, 'المجموع': 0 };
+            
+            let tbodyHTML = '';
+            
+            // Sort keys alphabetically
+            const keys = Object.keys(dataObj).sort();
+
+            keys.forEach(key => {
+                const row = dataObj[key];
+                const rowTotal = row['صغرى'] + row['متوسطة'] + row['كبرى'] + row['فوق الكبرى'] + row['خاصة'];
+                
+                totals['صغرى'] += row['صغرى'];
+                totals['متوسطة'] += row['متوسطة'];
+                totals['كبرى'] += row['كبرى'];
+                totals['فوق الكبرى'] += row['فوق الكبرى'];
+                totals['خاصة'] += row['خاصة'];
+                totals['المجموع'] += rowTotal;
+
+                let extraCol = hasSpecialtyColumn ? `<td class="px-6 py-3 font-medium text-gray-700 whitespace-nowrap">${escapeHtml(row.specLabel)}</td>` : '';
+
+                tbodyHTML += `
+                    <tr class="hover:bg-teal-50/50 transition-colors bg-white border-b">
+                        <td class="px-6 py-3 font-bold text-gray-800 whitespace-nowrap border-l border-gray-100">${escapeHtml(row.label)}</td>
+                        ${extraCol}
+                        <td class="px-6 py-3 text-center border-l border-gray-100">${row['صغرى'] || '-'}</td>
+                        <td class="px-6 py-3 text-center border-l border-gray-100">${row['متوسطة'] || '-'}</td>
+                        <td class="px-6 py-3 text-center border-l border-gray-100">${row['كبرى'] || '-'}</td>
+                        <td class="px-6 py-3 text-center border-l border-gray-100">${row['فوق الكبرى'] || '-'}</td>
+                        <td class="px-6 py-3 text-center border-l border-gray-100">${row['خاصة'] || '-'}</td>
+                        <td class="px-6 py-3 text-center font-bold text-teal-700 bg-teal-50/30">${rowTotal}</td>
+                    </tr>
+                `;
+            });
+
+            const extraTh = hasSpecialtyColumn ? `<th scope="col" class="px-6 py-3 border-r border-teal-600/20">الاختصاص</th>` : '';
+            const colspanTotal = hasSpecialtyColumn ? 2 : 1;
+
+            return `
+                <table class="w-full text-sm text-right text-gray-600">
+                    <thead class="text-xs text-white uppercase bg-teal-600">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 rounded-tr-lg border-l border-teal-500">${rowLabel}</th>
+                            ${extraTh}
+                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">صغرى</th>
+                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">متوسطة</th>
+                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">كبرى</th>
+                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">فوق الكبرى</th>
+                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">خاصة</th>
+                            <th scope="col" class="px-6 py-3 text-center rounded-tl-lg bg-teal-700 shadow-inner">المجموع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tbodyHTML || `<tr><td colspan="${hasSpecialtyColumn ? 8 : 7}" class="px-6 py-8 text-center text-gray-400">لا توجد بيانات</td></tr>`}
+                    </tbody>
+                    <tfoot class="bg-gray-100 font-bold text-gray-900 shadow-inner">
+                        <tr>
+                            <td colspan="${colspanTotal}" class="px-6 py-4 border-l border-gray-200">المجموع الكلي</td>
+                            <td class="px-6 py-4 text-center border-l border-gray-200 text-teal-700">${totals['صغرى']}</td>
+                            <td class="px-6 py-4 text-center border-l border-gray-200 text-teal-700">${totals['متوسطة']}</td>
+                            <td class="px-6 py-4 text-center border-l border-gray-200 text-teal-700">${totals['كبرى']}</td>
+                            <td class="px-6 py-4 text-center border-l border-gray-200 text-teal-700">${totals['فوق الكبرى']}</td>
+                            <td class="px-6 py-4 text-center border-l border-gray-200 text-teal-700">${totals['خاصة']}</td>
+                            <td class="px-6 py-4 text-center text-lg text-teal-800 bg-teal-100 border-t border-teal-200">${totals['المجموع']}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
+        }
+
+        // Render Tab 2: Specialty Stats
+        function renderSpecialtyStats() {
+            const stats = {};
+            appData.forEach(row => {
+                const spec = row.specialty || 'غير محدد';
+                if (!stats[spec]) {
+                    stats[spec] = { label: spec, 'صغرى': 0, 'متوسطة': 0, 'كبرى': 0, 'فوق الكبرى': 0, 'خاصة': 0 };
+                }
+                const degree = normalizeDegree(row.degree);
+                if (stats[spec][degree] !== undefined) {
+                    stats[spec][degree]++;
+                }
+            });
+
+            document.getElementById('spec-stats-container').innerHTML = generateStatsTableHTML(stats, 'التصنيف / الاختصاص');
+        }
+
+        // Render Tab 3: Doctor Stats
+        function renderDoctorStats() {
+            const stats = {};
+            appData.forEach(row => {
+                const doc = row.doctor || 'غير محدد';
+                const spec = row.specialty || 'غير محدد';
+                // Use a composite key in case a doctor has multiple specialties
+                const key = `${doc}_${spec}`;
+                
+                if (!stats[key]) {
+                    stats[key] = { label: doc, specLabel: spec, 'صغرى': 0, 'متوسطة': 0, 'كبرى': 0, 'فوق الكبرى': 0, 'خاصة': 0 };
+                }
+                const degree = normalizeDegree(row.degree);
+                if (stats[key][degree] !== undefined) {
+                    stats[key][degree]++;
+                }
+            });
+
+            document.getElementById('doc-stats-container').innerHTML = generateStatsTableHTML(stats, 'اسم الطبيب', true);
+        }
+
+        // Render Tab 4: Doctor by Specialty Stats
+        function renderDoctorBySpecialtyStats() {
+            const container = document.getElementById('doc-spec-container');
+            container.innerHTML = ''; // clear
+
+            // Group by specialty first
+            const groupedBySpec = {};
+            appData.forEach(row => {
+                const baseSpec = row.specialty || 'غير محدد';
+                const op = row.operation || '';
+                const doc = row.doctor || 'غير محدد';
+                const degree = normalizeDegree(row.degree);
+
+                // Split specialty dynamically ONLY for Tab 4
+                const spec = getTab4Specialty(baseSpec, op);
+
+                if (!groupedBySpec[spec]) groupedBySpec[spec] = {};
+                if (!groupedBySpec[spec][doc]) {
+                    groupedBySpec[spec][doc] = { label: doc, 'صغرى': 0, 'متوسطة': 0, 'كبرى': 0, 'فوق الكبرى': 0, 'خاصة': 0 };
+                }
+                
+                if (groupedBySpec[spec][doc][degree] !== undefined) {
+                    groupedBySpec[spec][doc][degree]++;
+                }
+            });
+
+            const specialties = Object.keys(groupedBySpec).sort();
+            
+            if (specialties.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-400 py-8 bg-gray-50 rounded-lg">لا توجد بيانات متوفرة</div>`;
+                return;
+            }
+
+            specialties.forEach(spec => {
+                const doctorsData = groupedBySpec[spec];
+                
+                const tableContainer = document.createElement('div');
+                tableContainer.className = "mb-8 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm";
+                
+                // Header for the specialty
+                const header = document.createElement('div');
+                header.className = "bg-slate-100 px-6 py-3 border-b border-gray-200 flex items-center gap-2";
+                header.innerHTML = `
+                    <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <h4 class="font-bold text-lg text-slate-800">اختصاص: <span class="text-teal-700">${escapeHtml(spec)}</span></h4>
+                `;
+                
+                const tableWrapper = document.createElement('div');
+                tableWrapper.className = "table-container overflow-x-auto";
+                tableWrapper.innerHTML = generateStatsTableHTML(doctorsData, 'اسم الطبيب');
+
+                tableContainer.appendChild(header);
+                tableContainer.appendChild(tableWrapper);
+                container.appendChild(tableContainer);
+            });
+        }
+
+        // Print utility
+        function printSection(tabId) {
+            // Switch to the tab to ensure it's visible before printing
+            switchTab(tabId);
+            
+            // Allow a tiny delay for CSS to apply visibility
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+
+        // --- Init ---
+        // Initialize an empty state on load
+        updateAllViews();
+
+    </script>
+    
+    <!-- Print specific styles -->
+    <style type="text/css" media="print">
+        @page { size: landscape; margin: 10mm; }
+        body { background-color: white; }
+        header, footer, .tab-btn, #paste-area, button { display: none !important; }
+        .tab-content { display: none !important; box-shadow: none !important; border: none !important; padding: 0 !important;}
+        .tab-content.active { display: block !important; }
+        .bg-white { background: transparent !important; }
+        .shadow-sm, .shadow-md, .shadow-inner { box-shadow: none !important; }
+        table { width: 100% !important; border-collapse: collapse !important; }
+        th, td { border: 1px solid #ddd !important; padding: 8px !important; }
+        thead th { background-color: #f3f4f6 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        /* Hide action column in tab-input if printing that */
+        th:last-child, td:last-child {
+            /* Basic logic, might need refinement if print targets specific tables differently */
+        }
+    </style>
+</body>
+</html>
