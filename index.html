@@ -116,7 +116,13 @@
                 <!-- Review Table -->
                 <div class="flex justify-between items-end mb-4">
                     <h3 class="font-bold text-xl text-gray-800 border-r-4 border-teal-500 pr-3">البيانات المدخلة (قابلة للتعديل)</h3>
-                    <div class="text-sm text-gray-500 font-medium" id="record-count">عدد القيود: 0</div>
+                    <div class="flex items-center gap-4">
+                        <button type="button" onclick="deleteAllData()" class="text-red-600 hover:text-red-800 flex items-center gap-1 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors text-sm font-semibold">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            مسح جميع البيانات
+                        </button>
+                        <div class="text-sm text-gray-500 font-medium" id="record-count">عدد القيود: 0</div>
+                    </div>
                 </div>
                 
                 <div class="table-container overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
@@ -196,6 +202,8 @@
     <script>
         // --- State Management ---
         let appData = [];
+        // Prevent an in-flight AI request from restoring rows after clearing them.
+        let clearRevision = 0;
         const degreesOrder = ['صغرى', 'متوسطة', 'كبرى', 'فوق الكبرى', 'خاصة'];
         
         const allowedSpecialties = [
@@ -284,6 +292,7 @@
                 return;
             }
 
+            const requestRevision = clearRevision;
             const btn = document.getElementById('process-ai-btn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري المعالجة الذكية...';
@@ -311,6 +320,8 @@
                     const jsonText = result.candidates[0].content.parts[0].text;
                     const parsedData = JSON.parse(jsonText);
                     
+                    // Ignore a response if the user cleared records during processing.
+                    if (requestRevision !== clearRevision) return;
                     let newAppData = parsedData.map((item, i) => ({
                         id: Date.now() + i,
                         patient: cleanString(item.patientName),
@@ -424,6 +435,22 @@
         function deleteRow(id) {
             appData = appData.filter(item => item.id !== id);
             updateAllViews();
+        }
+
+        // Erases current-session rows and pasted text, with user confirmation.
+        function deleteAllData() {
+            const pasteArea = document.getElementById('paste-area');
+            if (appData.length === 0 && !pasteArea.value.trim()) {
+                showMessage('لا توجد بيانات لمسحها.', 'error');
+                return;
+            }
+            const confirmed = window.confirm('هل أنت متأكد من مسح جميع البيانات؟ لا يمكن التراجع عن هذه العملية.');
+            if (!confirmed) return;
+            clearRevision += 1;
+            appData = [];
+            pasteArea.value = '';
+            updateAllViews();
+            showMessage('تم مسح جميع البيانات من الصفحة بنجاح.', 'success');
         }
 
         // Generates the standard statistics table HTML
