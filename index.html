@@ -53,6 +53,27 @@
         .table-container::-webkit-scrollbar-thumb:hover {
             background: #14b8a6; 
         }
+        /* Accessible column sorting for all statistics and input tables. */
+        .sort-control {
+            display: inline-flex;
+            gap: .45rem;
+            align-items: center;
+            justify-content: center;
+            font: inherit;
+            color: inherit;
+            cursor: pointer;
+            border: 0;
+            border-radius: .3rem;
+            padding: .1rem .2rem;
+            background: transparent;
+            white-space: nowrap;
+        }
+        .sort-control:hover { background: rgba(255, 255, 255, .17); }
+        #tab-input .sort-control:hover { background: rgba(13, 148, 136, .10); }
+        .sort-control:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+        .sort-arrows { font-family: sans-serif; font-size: 14px; line-height: 1; opacity: .65; }
+        .sort-control.is-sorted .sort-arrows { opacity: 1; font-weight: 800; }
+        .sort-control.is-sorted { text-decoration: underline; text-underline-offset: 4px; }
     </style>
 </head>
 <body class="text-gray-800 antialiased min-h-screen flex flex-col">
@@ -133,13 +154,13 @@
                     <table class="w-full text-sm text-right text-gray-500">
                         <thead class="text-xs text-teal-900 uppercase bg-teal-100/50">
                             <tr>
-                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">ت</th>
-                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">المريض</th>
-                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">التشخيص الأولي</th>
-                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">تصنيف العملية (الاختصاص)</th>
-                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">اسم العملية</th>
-                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">درجة العملية</th>
-                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200">الطبيب المعالج</th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200" aria-sort="none"><button type="button" class="sort-control" data-sort-table="review" data-sort-key="index" title="فرز حسب ت">ت<span class="sort-arrows" aria-hidden="true">↕</span></button></th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200" aria-sort="none"><button type="button" class="sort-control" data-sort-table="review" data-sort-key="patient" title="فرز حسب المريض">المريض<span class="sort-arrows" aria-hidden="true">↕</span></button></th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200" aria-sort="none"><button type="button" class="sort-control" data-sort-table="review" data-sort-key="initialDiagnosis" title="فرز حسب التشخيص الأولي">التشخيص الأولي<span class="sort-arrows" aria-hidden="true">↕</span></button></th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200" aria-sort="none"><button type="button" class="sort-control" data-sort-table="review" data-sort-key="specialty" title="فرز حسب تصنيف العملية (الاختصاص)">تصنيف العملية (الاختصاص)<span class="sort-arrows" aria-hidden="true">↕</span></button></th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200" aria-sort="none"><button type="button" class="sort-control" data-sort-table="review" data-sort-key="operation" title="فرز حسب اسم العملية">اسم العملية<span class="sort-arrows" aria-hidden="true">↕</span></button></th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200" aria-sort="none"><button type="button" class="sort-control" data-sort-table="review" data-sort-key="degree" title="فرز حسب درجة العملية">درجة العملية<span class="sort-arrows" aria-hidden="true">↕</span></button></th>
+                                <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200" aria-sort="none"><button type="button" class="sort-control" data-sort-table="review" data-sort-key="doctor" title="فرز حسب الطبيب المعالج">الطبيب المعالج<span class="sort-arrows" aria-hidden="true">↕</span></button></th>
                                 <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200 text-center">إجراء</th>
                             </tr>
                         </thead>
@@ -260,6 +281,72 @@
         let appData = [];
         // Prevent an in-flight AI request from restoring rows after clearing them.
         let clearRevision = 0;
+        // Each table keeps its own active sort, even when switching tabs or editing rows.
+        const tableSorts = Object.create(null);
+        const arabicCollator = new Intl.Collator('ar', { numeric: true, sensitivity: 'base' });
+        const numericSortKeys = new Set(['index', 'صغرى', 'متوسطة', 'كبرى', 'فوق الكبرى', 'خاصة', 'total']);
+
+        function sortDirection(tableId, key) {
+            const active = tableSorts[tableId];
+            return active && active.key === key ? active.direction : null;
+        }
+
+        function makeSortHeader(title, tableId, key, extraClasses = '') {
+            const direction = sortDirection(tableId, key);
+            const arrow = direction === 'desc' ? '↓' : direction === 'asc' ? '↑' : '↕';
+            const ariaSort = direction === 'desc' ? 'descending' : direction === 'asc' ? 'ascending' : 'none';
+            return `<th scope="col" aria-sort="${ariaSort}" class="px-6 py-3 ${extraClasses}">` +
+                `<button type="button" class="sort-control${direction ? ' is-sorted' : ''}" ` +
+                `data-sort-table="${escapeHtml(tableId)}" data-sort-key="${escapeHtml(key)}" ` +
+                `title="فرز حسب ${escapeHtml(title)}">${escapeHtml(title)}` +
+                `<span class="sort-arrows" aria-hidden="true">${arrow}</span></button></th>`;
+        }
+
+        function updateReviewSortHeaders() {
+            document.querySelectorAll('#tab-input th:has(> .sort-control)').forEach(th => {
+                const button = th.querySelector('.sort-control');
+                const direction = sortDirection('review', button.dataset.sortKey);
+                th.setAttribute('aria-sort', direction === 'desc' ? 'descending' : direction === 'asc' ? 'ascending' : 'none');
+                button.classList.toggle('is-sorted', Boolean(direction));
+                button.querySelector('.sort-arrows').textContent = direction === 'desc' ? '↓' : direction === 'asc' ? '↑' : '↕';
+            });
+        }
+
+        function sortValues(a, b) {
+            if (typeof a === 'number' && typeof b === 'number') return a - b;
+            return arabicCollator.compare(String(a ?? ''), String(b ?? ''));
+        }
+
+        function sortTableRows(rows, tableId, accessor) {
+            const active = tableSorts[tableId];
+            if (!active) return rows;
+            const direction = active.direction === 'desc' ? -1 : 1;
+            return [...rows].sort((a, b) => {
+                const comparison = sortValues(accessor(a, active.key), accessor(b, active.key));
+                return comparison * direction;
+            });
+        }
+
+        // Event delegation also handles tables that are regenerated after data changes.
+        document.addEventListener('click', event => {
+            const button = event.target.closest('button[data-sort-table]');
+            if (!button) return;
+            const tableId = button.dataset.sortTable;
+            const key = button.dataset.sortKey;
+            const active = tableSorts[tableId];
+            tableSorts[tableId] = {
+                key,
+                direction: active && active.key === key && active.direction === 'desc'
+                    ? 'asc'
+                    : active && active.key === key && active.direction === 'asc'
+                        ? 'desc'
+                        : numericSortKeys.has(key) ? 'desc' : 'asc'
+            };
+            if (tableId === 'review') renderReviewTable();
+            else if (tableId === 'spec') renderSpecialtyStats();
+            else if (tableId === 'doc') renderDoctorStats();
+            else if (tableId.startsWith('doc-spec:')) renderDoctorBySpecialtyStats();
+        });
         const degreesOrder = ['صغرى', 'متوسطة', 'كبرى', 'فوق الكبرى', 'خاصة'];
         
         const allowedSpecialties = [
@@ -473,20 +560,28 @@
         function renderReviewTable() {
             const tbody = document.getElementById('review-table-body');
             document.getElementById('record-count').textContent = `عدد القيود: ${appData.length}`;
-            
+            updateReviewSortHeaders();
+
             if (appData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400 bg-gray-50">لا توجد بيانات حالياً.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = '';
-            appData.forEach((row, index) => {
+            const sortedRows = sortTableRows(
+                appData.map((row, originalIndex) => ({ row, originalIndex })),
+                'review',
+                (item, key) => key === 'index' ? item.originalIndex + 1
+                    : key === 'degree' ? degreesOrder.indexOf(normalizeDegree(item.row.degree))
+                    : item.row[key]
+            );
+            sortedRows.forEach(({ row, originalIndex }) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-teal-50/30 transition-colors odd:bg-white even:bg-gray-50/50";
                 
                 // Using dataset to link HTML cell to appData object
                 tr.innerHTML = `
-                    <td class="px-6 py-3 whitespace-nowrap text-gray-400">${index + 1}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-gray-400">${originalIndex + 1}</td>
                     <td class="px-6 py-3 whitespace-nowrap font-medium text-gray-900 border-x border-gray-100" contenteditable="true" data-id="${row.id}" data-field="patient">${escapeHtml(row.patient)}</td>
                     <td class="px-6 py-3 whitespace-nowrap border-x border-gray-100" contenteditable="true" data-id="${row.id}" data-field="initialDiagnosis">${escapeHtml(row.initialDiagnosis || '')}</td>
                     <td class="px-6 py-3 whitespace-nowrap border-x border-gray-100" contenteditable="true" data-id="${row.id}" data-field="specialty">${escapeHtml(row.specialty)}</td>
@@ -530,7 +625,9 @@
             const dataRowIndex = appData.findIndex(item => item.id === id);
             if (dataRowIndex !== -1) {
                 appData[dataRowIndex][field] = newValue;
-                
+                // Keep the visible rows in order when an edited value changes the active sort.
+                if (tableSorts.review) renderReviewTable();
+
                 // Re-render statistics tables silently
                 renderSpecialtyStats();
                 renderDoctorStats();
@@ -560,17 +657,19 @@
         }
 
         // Generates the standard statistics table HTML
-        function generateStatsTableHTML(dataObj, rowLabel, hasSpecialtyColumn = false) {
+        function generateStatsTableHTML(dataObj, rowLabel, hasSpecialtyColumn = false, tableId = 'spec') {
             // Calculate column totals
             const totals = { 'صغرى': 0, 'متوسطة': 0, 'كبرى': 0, 'فوق الكبرى': 0, 'خاصة': 0, 'المجموع': 0 };
             
             let tbodyHTML = '';
             
-            // Sort keys alphabetically
-            const keys = Object.keys(dataObj).sort();
+            // Retain the existing alphabetical default until a column is selected.
+            const defaultRows = Object.keys(dataObj).sort().map(key => dataObj[key]);
+            const sortedRows = sortTableRows(defaultRows, tableId, (row, key) =>
+                key === 'total' ? degreesOrder.reduce((sum, degree) => sum + (row[degree] || 0), 0) : row[key]
+            );
 
-            keys.forEach(key => {
-                const row = dataObj[key];
+            sortedRows.forEach(row => {
                 const rowTotal = row['صغرى'] + row['متوسطة'] + row['كبرى'] + row['فوق الكبرى'] + row['خاصة'];
                 
                 totals['صغرى'] += row['صغرى'];
@@ -596,21 +695,22 @@
                 `;
             });
 
-            const extraTh = hasSpecialtyColumn ? `<th scope="col" class="px-6 py-3 border-r border-teal-600/20">الاختصاص</th>` : '';
+            const extraTh = hasSpecialtyColumn
+                ? makeSortHeader('الاختصاص', tableId, 'specLabel', 'border-r border-teal-600/20') : '';
             const colspanTotal = hasSpecialtyColumn ? 2 : 1;
 
             return `
                 <table class="w-full text-sm text-right text-gray-600">
                     <thead class="text-xs text-white uppercase bg-teal-600">
                         <tr>
-                            <th scope="col" class="px-6 py-3 rounded-tr-lg border-l border-teal-500">${rowLabel}</th>
+                            ${makeSortHeader(rowLabel, tableId, 'label', 'rounded-tr-lg border-l border-teal-500')}
                             ${extraTh}
-                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">صغرى</th>
-                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">متوسطة</th>
-                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">كبرى</th>
-                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">فوق الكبرى</th>
-                            <th scope="col" class="px-6 py-3 text-center border-l border-teal-500">خاصة</th>
-                            <th scope="col" class="px-6 py-3 text-center rounded-tl-lg bg-teal-700 shadow-inner">المجموع</th>
+                            ${makeSortHeader('صغرى', tableId, 'صغرى', 'text-center border-l border-teal-500')}
+                            ${makeSortHeader('متوسطة', tableId, 'متوسطة', 'text-center border-l border-teal-500')}
+                            ${makeSortHeader('كبرى', tableId, 'كبرى', 'text-center border-l border-teal-500')}
+                            ${makeSortHeader('فوق الكبرى', tableId, 'فوق الكبرى', 'text-center border-l border-teal-500')}
+                            ${makeSortHeader('خاصة', tableId, 'خاصة', 'text-center border-l border-teal-500')}
+                            ${makeSortHeader('المجموع', tableId, 'total', 'text-center rounded-tl-lg bg-teal-700 shadow-inner')}
                         </tr>
                     </thead>
                     <tbody>
@@ -645,7 +745,7 @@
                 }
             });
 
-            document.getElementById('spec-stats-container').innerHTML = generateStatsTableHTML(stats, 'التصنيف / الاختصاص');
+            document.getElementById('spec-stats-container').innerHTML = generateStatsTableHTML(stats, 'التصنيف / الاختصاص', false, 'spec');
         }
 
         // Render Tab 3: Doctor Stats
@@ -666,7 +766,7 @@
                 }
             });
 
-            document.getElementById('doc-stats-container').innerHTML = generateStatsTableHTML(stats, 'اسم الطبيب', true);
+            document.getElementById('doc-stats-container').innerHTML = generateStatsTableHTML(stats, 'اسم الطبيب', true, 'doc');
         }
 
         // Render Tab 4: Doctor by Specialty Stats
@@ -718,7 +818,7 @@
                 
                 const tableWrapper = document.createElement('div');
                 tableWrapper.className = "table-container overflow-x-auto";
-                tableWrapper.innerHTML = generateStatsTableHTML(doctorsData, 'اسم الطبيب');
+                tableWrapper.innerHTML = generateStatsTableHTML(doctorsData, 'اسم الطبيب', false, 'doc-spec:' + encodeURIComponent(spec));
 
                 tableContainer.appendChild(header);
                 tableContainer.appendChild(tableWrapper);
@@ -747,7 +847,9 @@
     <style type="text/css" media="print">
         @page { size: landscape; margin: 10mm; }
         body { background-color: white; }
-        header, footer, .tab-btn, #paste-area, button { display: none !important; }
+        header, footer, .tab-btn, #paste-area, button:not(.sort-control) { display: none !important; }
+        .sort-control { display: inline-flex !important; text-decoration: none !important; padding: 0 !important; }
+        .sort-control .sort-arrows { display: none !important; }
         .tab-content { display: none !important; box-shadow: none !important; border: none !important; padding: 0 !important;}
         .tab-content.active { display: block !important; }
         .bg-white { background: transparent !important; }
