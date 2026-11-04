@@ -89,13 +89,97 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         .sort-arrows { font-family: sans-serif; font-size: 14px; line-height: 1; opacity: .65; }
         .sort-control.is-sorted .sort-arrows { opacity: 1; font-weight: 800; }
         .sort-control.is-sorted { text-decoration: underline; text-underline-offset: 4px; }
+
+        /* Input/review table: maximum usable page width + a persistent column header. */
+        #tab-input { min-width: 0; }
+        #review-table-scroll {
+            width: 100%;
+            max-width: 100%;
+            /* Keep big imports within this independently scrollable table, so the header stays visible. */
+            max-height: clamp(360px, calc(100vh - 170px), 900px);
+            max-height: clamp(360px, calc(100dvh - 170px), 900px);
+            overflow-x: auto;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            position: relative;
+        }
+        #review-table-scroll:focus-visible {
+            outline: 2px solid #0d9488;
+            outline-offset: 3px;
+        }
+        #review-data-table {
+            table-layout: fixed;
+            border-spacing: 0;
+            width: 100%;
+            min-width: 1080px;
+        }
+        #review-data-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            background-color: #dcf9f2;
+            box-shadow: inset 0 -1px 0 #7dd3c7;
+            padding: .75rem .3rem;
+            vertical-align: middle;
+            text-align: right;
+            white-space: normal;
+        }
+        #review-data-table thead th:last-child { text-align: center; }
+        #review-data-table .sort-control {
+            white-space: normal;
+            text-align: right;
+            justify-content: flex-start;
+            gap: .2rem;
+            line-height: 1.4;
+        }
+        #review-data-table tbody td {
+            padding: .68rem .4rem;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: normal;
+            line-height: 1.55;
+            vertical-align: middle;
+        }
+        #review-data-table tbody td[data-field="admissionDate"] {
+            direction: ltr;
+            text-align: center;
+            unicode-bidi: plaintext;
+            overflow-wrap: normal;
+            word-break: normal;
+        }
+        #review-data-table tbody td:first-child,
+        #review-data-table tbody td:last-child { text-align: center; }
+        #review-data-table tbody td[data-field="operation"] { min-width: 0; }
+        @media (min-width: 1250px) {
+            #review-data-table { min-width: 0; }
+        }
+        @media (max-width: 767px) {
+            #review-table-scroll { max-height: min(72dvh, 680px); }
+        }
+        @media print {
+            #review-table-scroll {
+                max-height: none !important;
+                overflow: visible !important;
+                border: none !important;
+            }
+            #review-data-table {
+                min-width: 0 !important;
+                width: 100% !important;
+                table-layout: auto !important;
+            }
+            #review-data-table thead th {
+                position: static !important;
+                box-shadow: none !important;
+            }
+            #review-data-table thead { display: table-header-group; }
+        }
     </style>
 </head>
 <body class="text-gray-800 antialiased min-h-screen flex flex-col">
 
     <!-- Header -->
     <header class="bg-teal-700 text-white shadow-md py-4 px-6 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="w-full mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <svg class="w-8 h-8 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <h1 class="text-2xl font-bold tracking-wide">أحمد عبدالامير وحسين زهير الوحوش ولا عزاء لهمام</h1>
@@ -107,7 +191,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+    <main class="flex-grow w-full min-w-0 mx-auto p-3 sm:p-4 lg:px-5 lg:py-6">
         
         <!-- Tabs Navigation -->
         <div class="bg-white rounded-t-xl shadow-sm border-b border-gray-200 flex overflow-x-auto">
@@ -126,7 +210,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         </div>
 
         <!-- Tabs Content Container -->
-        <div class="bg-white rounded-b-xl shadow-md p-6 min-h-[500px] mb-8 border border-t-0 border-gray-200">
+        <div class="bg-white rounded-b-xl shadow-md p-3 sm:p-4 lg:p-5 min-h-[500px] mb-8 border border-t-0 border-gray-200 min-w-0">
             
             <!-- TAB 1: Input & Review -->
             <div id="tab-input" class="tab-content active">
@@ -174,8 +258,19 @@ https://github.com/nodeca/pako/blob/main/LICENSE
                     </div>
                 </div>
                 
-                <div class="table-container overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-                    <table class="w-full text-sm text-right text-gray-500">
+                <div id="review-table-scroll" class="table-container border border-gray-200 rounded-lg shadow-sm" role="region" aria-label="جدول بيانات المرضى؛ يمكن تمريره أفقياً وعمودياً" tabindex="0">
+                    <table id="review-data-table" class="w-full text-sm text-right text-gray-500">
+                        <colgroup>
+                            <col style="width:3%">
+                            <col style="width:11.5%">
+                            <col style="width:10.5%">
+                            <col style="width:23%">
+                            <col style="width:13%">
+                            <col style="width:17%">
+                            <col style="width:8%">
+                            <col style="width:10%">
+                            <col style="width:4%">
+                        </colgroup>
                         <thead class="text-xs text-teal-900 uppercase bg-teal-100/50">
                             <tr>
                                 <th scope="col" class="px-6 py-4 font-bold border-b border-teal-200" aria-sort="none"><button type="button" class="sort-control" data-sort-table="review" data-sort-key="index" title="فرز حسب ت">ت<span class="sort-arrows" aria-hidden="true">↕</span></button></th>
