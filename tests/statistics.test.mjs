@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import {strict as assert} from 'node:assert';
+import {calculateStatistics,effectiveSpecialty} from '../js/statistics.js';
+import {normalizeDegree,normalizeAdmissionDate,validateRecord,degreesOrder} from '../js/utils.js';
+function row(doctor,specialty,degree,operation='عملية'){return {patient:'س',admissionDate:'2026-11-01 08:00',initialDiagnosis:'T00',doctor,specialty,degree,operation};}
+test('216 operations: all three reports match exactly',()=>{const rows=Array.from({length:216},(_,i)=>row(`دكتور ${i%13}`,['جراحة عامة','أنف وأذن وحنجرة','الكسور والعظام'][i%3],degreesOrder[i%5]));const s=calculateStatistics(rows);assert.equal(s.auditOK,true);assert.deepEqual(s.totals,{records:216,valid:216,specialties:216,doctors:216,details:216});assert.equal(s.specialties.length,3);});
+test('Gynecology/cesarean split stays aligned across all reports',()=>{const s=calculateStatistics([row('د. عمر','نسائية وتوليد','كبرى','عملية قيصرية'),row('د. عمر','نسائية وتوليد','متوسطة','تنظير نسائي'),row('د. عمر','قيصرية','كبرى','قيصرية')]);assert.deepEqual(Object.fromEntries(s.specialties.map(x=>[x.label,x.total])),{'نسائية':1,'قيصرية':2});assert.equal(s.doctors.length,2);assert.equal(s.auditOK,true);});
+test('Two doctors with same prefix do not merge and invalid records break audit',()=>{const s=calculateStatistics([row('محمد_علي','جراحة عامة','خاصة'),row('محمد','علي_جراحة عامة','خاصة'),row('محمد','جراحة عامة','غير معروف')]);assert.equal(s.totals.valid,2);assert.equal(s.totals.records,3);assert.equal(s.auditOK,false);assert.deepEqual(s.errors,[3]);});
+test('Degree aliases and local dates',()=>{assert.equal(normalizeDegree('ف/كبرى'),'فوق الكبرى');assert.equal(normalizeDegree('وسطى'),'متوسطة');assert.equal(normalizeDegree('خاصة'),'خاصة');assert.equal(normalizeAdmissionDate('31/10/2026 13:29'),'2026-10-31 13:29');assert.equal(normalizeAdmissionDate('2026-02-30'),null);assert.equal(normalizeAdmissionDate(''),'');});
+test('Validation preserves data and rejects invalid degrees',()=>{assert.equal(validateRecord(row('طبيب','عام','خاصة')).doctor,'طبيب');assert.throws(()=>validateRecord(row('طبيب','عام','خطأ')));});
