@@ -22,3 +22,28 @@
 .login-help a:hover {
   text-decoration: underline;
 }
+
+/* SPA navigation: keep the shell and the old view visible until the next is ready. */
+.sidebar a.nav-pending::after {
+  content: "";
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid #9acfc7;
+  border-top-color: var(--deep);
+  border-radius: 50%;
+  margin-inline-start: 9px;
+  vertical-align: middle;
+  animation: spin .75s linear infinite;
+}
+.main-content.page-swap-in { animation: content-enter .18s ease-out both; }
+@keyframes content-enter {
+  from { opacity: .72; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-content.page-swap-in, .sidebar a.nav-pending::after { animation: none; }
+}
+@media print {
+  .main-content.page-swap-in { animation: none; transform: none; opacity: 1; }
+}
