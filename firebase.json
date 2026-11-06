@@ -1,0 +1,3 @@
+{
+  "functions": [{"source":"functions","codebase":"medical-admin","ignore":["node_modules",".git","firebase-debug.log","*.secret.json","service-account*.json"]}]
+}
