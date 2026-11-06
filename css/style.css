@@ -3,18 +3,20 @@
 @media print{body{background:white}#header-slot,#sidebar-slot,#footer-slot,.page-heading button,.no-print,.upload-panel,.actions,.login-card,.record-dialog{display:none!important}.layout{display:block}.main-content{padding:0}.panel{box-shadow:none;border:0;padding:0}.page-heading{display:block}.table-wrap,.dashboard-table{overflow:visible;max-height:none;border:0}table,.report-container table{min-width:0}thead{display:table-header-group}thead th{position:static;print-color-adjust:exact;-webkit-print-color-adjust:exact}tr{break-inside:avoid}.spec-section{break-inside:avoid}body{font-size:11pt}}
 
 .login-help {
+  font-size: 13px;
+  line-height: 1.8;
   text-align: center;
-  line-height: 2;
-  margin-top: 20px;
   color: #64748b;
+  margin-top: 16px;
 }
 
 .login-help a {
+  font-size: 13px;
+  font-weight: 600;
   color: #087f79;
-  font-weight: bold;
   text-decoration: none;
-  direction: ltr;
   display: inline-block;
+  direction: ltr;
 }
 
 .login-help a:hover {
