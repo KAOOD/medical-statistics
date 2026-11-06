@@ -1,10 +1,23 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>الصفحة الرئيسية | نظام الإحصاء الطبي</title><link rel="stylesheet" href="../css/style.css"></head>
+<title>الصفحة الرئيسية | نظام الإحصاء الطبي</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
 <body data-page="dashboard" data-auth="pending">
-<div id="header-slot"></div><div class="layout" id="app-shell"><div id="sidebar-slot"></div><main class="main-content" id="main-content"><div class="page-heading"><div><p class="eyebrow">إدارة العمليات</p><h1>إدخال ومراجعة بيانات العمليات</h1><p class="muted">استيراد Excel محلياً، تعديل مباشر.</p></div><span class="pill" id="record-count">0 قيد</span></div>
+<div id="header-slot"></div>
+<div class="layout" id="app-shell">
+<div id="sidebar-slot"></div>
+<main class="main-content" id="main-content">
+<div class="page-heading">
+<div>
+<h1>إدخال ومراجعة بيانات العمليات</h1>
+</div>
+<span class="pill" id="record-count">0 قيد</span>
+</div>
 <section class="panel upload-panel" id="excel-drop-zone"><div class="panel-title"><h2>استيراد ملف Excel</h2><button id="download-template" class="btn btn-outline" type="button">تنزيل القالب الفارغ (.xlsx)</button></div>
 <p class="muted">ارفع ملف ‎.xlsx بالقالب المعتمد.</p>
 <div class="upload-actions"><label for="excel-file" class="btn btn-primary">اختيار ملف Excel</label><input type="file" id="excel-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><span id="excel-file-name" class="muted">أو اسحب الملف إلى هذه المنطقة</span></div>
@@ -15,4 +28,5 @@
 <div id="review-table-scroll" class="table-wrap dashboard-table" role="region" tabindex="0" aria-label="جدول العمليات الطبيّة"><table id="review-data-table"><colgroup><col class="c-index"><col class="c-patient"><col class="c-date"><col class="c-diagnosis"><col class="c-specialty"><col class="c-operation"><col class="c-degree"><col class="c-doctor"><col class="c-action"></colgroup><thead><tr><th scope="col"><button type="button" class="sort-btn" data-sort-key="index">ت<span class="sort-arrow">↕</span></button></th><th scope="col"><button type="button" class="sort-btn" data-sort-key="patient">المريض<span class="sort-arrow">↕</span></button></th><th scope="col"><button type="button" class="sort-btn" data-sort-key="admissionDate">تاريخ الدخول<span class="sort-arrow">↕</span></button></th><th scope="col"><button type="button" class="sort-btn" data-sort-key="initialDiagnosis">التشخيص الأولي<span class="sort-arrow">↕</span></button></th><th scope="col"><button type="button" class="sort-btn" data-sort-key="specialty">تصنيف العملية (الاختصاص)<span class="sort-arrow">↕</span></button></th><th scope="col"><button type="button" class="sort-btn" data-sort-key="operation">اسم العملية<span class="sort-arrow">↕</span></button></th><th scope="col"><button type="button" class="sort-btn" data-sort-key="degree">درجة العملية<span class="sort-arrow">↕</span></button></th><th scope="col"><button type="button" class="sort-btn" data-sort-key="doctor">الطبيب المعالج<span class="sort-arrow">↕</span></button></th><th scope="col">إجراء</th></tr></thead><tbody id="review-table-body"><tr><td colspan="9" class="empty">لا توجد بيانات. ارفع ملف Excel أو أضف قيداً.</td></tr></tbody></table></div></section>
 <dialog id="record-dialog" class="record-dialog"><form id="record-form" method="dialog"><div class="dialog-head"><h2 id="record-dialog-title">إضافة قيد جديد</h2><button id="close-dialog" class="icon-btn" type="button" aria-label="إغلاق">×</button></div><div class="form-grid"><label class="field">المريض<small>اختياري</small><input id="field-patient" name="patient" type="text" maxlength="300" autocomplete="off" ></label><label class="field">تاريخ الدخول<small>اختياري للفرز</small><input id="field-admissionDate" name="admissionDate" type="datetime-local" maxlength="300" autocomplete="off" ></label><label class="field">التشخيص الأولي<small>اختياري</small><input id="field-initialDiagnosis" name="initialDiagnosis" type="text" maxlength="300" autocomplete="off" ></label><label class="field">تصنيف العملية (الاختصاص)<small>مطلوب</small><select id="field-specialty" name="specialty" required><option value="">اختر تصنيف العملية (الاختصاص)</option></select></label><label class="field">اسم العملية<small>مطلوب</small><input id="field-operation" name="operation" type="text" maxlength="300" autocomplete="off" required></label><label class="field">درجة العملية<small>مطلوب</small><select id="field-degree" name="degree" required><option value="">اختر درجة العملية</option></select></label><label class="field">الطبيب المعالج<small>مطلوب</small><input id="field-doctor" name="doctor" type="text" maxlength="300" autocomplete="off" required></label></div><p class="alert error hidden" id="form-error"></p><div class="dialog-actions"><button type="button" class="btn btn-outline" id="cancel-record">إلغاء</button><button type="submit" class="btn btn-primary">حفظ القيد</button></div></form></dialog></main></div><div id="footer-slot"></div>
 <script type="module" src="../js/app.js"></script>
-</body></html>
+</body>
+</html>
