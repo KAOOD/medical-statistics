@@ -62,21 +62,21 @@ export function classifyReportSpecialties(row) {
 
   const birthGroup = OBSTETRICS_CODES[diagnosisCode];
 
-  // الولادات الطبيعية والقيصرية
-  if (birthGroup) {
-    return {
-      specialtyReport: birthGroup,
-      doctorReport: birthGroup,
-      detailSpecialty: 'توليد'
-    };
-  }
-
-  // بقية عمليات النسائية والتوليد
+// الولادات الطبيعية والقيصرية
+if (birthGroup) {
   return {
-    specialtyReport: 'نسائية وتوليد',
-    doctorReport: 'نسائية',
-    detailSpecialty: 'نسائية'
+    specialtyReport: 'توليد',
+    doctorReport: birthGroup,
+    detailSpecialty: 'توليد'
   };
+}
+
+// بقية عمليات النسائية
+return {
+  specialtyReport: 'نسائية',
+  doctorReport: 'نسائية',
+  detailSpecialty: 'نسائية'
+};
 }
 
 // الاختصاص المفصل
